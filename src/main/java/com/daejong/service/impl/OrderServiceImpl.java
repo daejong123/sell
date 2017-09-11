@@ -5,6 +5,8 @@ import com.daejong.dataobject.OrderMaster;
 import com.daejong.dataobject.ProductInfo;
 import com.daejong.dto.CartDTO;
 import com.daejong.dto.OrderDTO;
+import com.daejong.enums.OrderStatusEnum;
+import com.daejong.enums.PayStatusEnum;
 import com.daejong.enums.ResultEnum;
 import com.daejong.exception.SellException;
 import com.daejong.repository.OrderDetailRepository;
@@ -50,7 +52,7 @@ public class OrderServiceImpl implements OrderService {
                 throw new SellException(ResultEnum.PRODUCT_NOT_EXISTS);
             }
             //2. 计算订单总价
-            orderAmount = orderDetail.getProductPrice()
+            orderAmount = productInfo.getProductPrice()
                     .multiply(new BigDecimal(orderDetail.getProductQuantity()))
                     .add(orderAmount);
             //订单详情入库, controller只会传几个参数过来
@@ -65,9 +67,11 @@ public class OrderServiceImpl implements OrderService {
 
         //3. 写入订单数据库(OrderMaster和OrderDetail)
         OrderMaster orderMaster = new OrderMaster();
+        BeanUtils.copyProperties(orderDTO, orderMaster);
         orderMaster.setOrderId(orderId);
         orderMaster.setOrderAmount(orderAmount);
-        BeanUtils.copyProperties(orderDTO, orderMaster);
+        orderMaster.setOrderState(OrderStatusEnum.NEW.getCode());
+        orderMaster.setPayState(PayStatusEnum.WAIT.getCode());
         orderMasterRepository.save(orderMaster);
 
         //4. 扣库存
