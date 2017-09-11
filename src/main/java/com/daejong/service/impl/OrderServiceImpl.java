@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -37,6 +38,7 @@ public class OrderServiceImpl implements OrderService {
     private OrderDetailRepository orderDetailRepository;
 
     @Override
+    @Transactional
     public OrderDTO create(OrderDTO orderDTO) {
         String orderId = KeyUtil.getUniqueKey();
         BigDecimal orderAmount = new BigDecimal(0);
@@ -71,13 +73,14 @@ public class OrderServiceImpl implements OrderService {
         //4. 扣库存
 //        productService.decreaseStock(cartDTOList);
         //也可以使用lambada表达式. 可以起到不污染其他代码
-        orderDTO.getOrderDetails()
+        List<CartDTO> cartDTOList = orderDTO.getOrderDetails()
                 .stream()
                 .map(e ->
                         new CartDTO(e.getProductId(), e.getProductQuantity())
                 )
                 .collect(Collectors.toList());
-        return null;
+        productService.decreaseStock(cartDTOList);
+        return orderDTO;
     }
 
     @Override
