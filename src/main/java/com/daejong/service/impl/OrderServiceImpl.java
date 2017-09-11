@@ -3,6 +3,7 @@ package com.daejong.service.impl;
 import com.daejong.dataobject.OrderDetail;
 import com.daejong.dataobject.OrderMaster;
 import com.daejong.dataobject.ProductInfo;
+import com.daejong.dto.CartDTO;
 import com.daejong.dto.OrderDTO;
 import com.daejong.enums.ResultEnum;
 import com.daejong.exception.SellException;
@@ -18,6 +19,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by Daejong on 2017/9/11.
@@ -36,10 +40,11 @@ public class OrderServiceImpl implements OrderService {
     public OrderDTO create(OrderDTO orderDTO) {
         String orderId = KeyUtil.getUniqueKey();
         BigDecimal orderAmount = new BigDecimal(0);
+//        List<CartDTO> cartDTOList = new ArrayList<>();
         //1. 查询商品(数量,单价)
         for (OrderDetail orderDetail : orderDTO.getOrderDetails()) {
             ProductInfo productInfo = productService.findOne(orderDetail.getProductId());
-            if(productInfo == null) {
+            if (productInfo == null) {
                 throw new SellException(ResultEnum.PRODUCT_NOT_EXISTS);
             }
             //2. 计算订单总价
@@ -52,6 +57,8 @@ public class OrderServiceImpl implements OrderService {
             orderDetail.setOrderId(orderId);
             BeanUtils.copyProperties(productInfo, orderDetail);
             orderDetailRepository.save(orderDetail);
+//            CartDTO cartDTO = new CartDTO(orderDetail.getProductId(), orderDetail.getProductQuantity());
+//            cartDTOList.add(cartDTO);
         }
 
         //3. 写入订单数据库(OrderMaster和OrderDetail)
@@ -62,7 +69,14 @@ public class OrderServiceImpl implements OrderService {
         orderMasterRepository.save(orderMaster);
 
         //4. 扣库存
-
+//        productService.decreaseStock(cartDTOList);
+        //也可以使用lambada表达式. 可以起到不污染其他代码
+        orderDTO.getOrderDetails()
+                .stream()
+                .map(e ->
+                        new CartDTO(e.getProductId(), e.getProductQuantity())
+                )
+                .collect(Collectors.toList());
         return null;
     }
 
