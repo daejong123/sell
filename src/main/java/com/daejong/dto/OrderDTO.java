@@ -1,12 +1,13 @@
 package com.daejong.dto;
 
 import com.daejong.dataobject.OrderDetail;
-import com.daejong.enums.OrderStatusEnum;
-import com.daejong.enums.PayStatusEnum;
+import com.daejong.serializer.Date2LongSerializer;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Data;
 
-import javax.persistence.Id;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -17,6 +18,8 @@ import java.util.List;
  * Created by Daejong on 2017/9/11.
  */
 @Data
+//该注解可以在返回前端数据的时候,可以隐藏掉值为null的字段.
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class OrderDTO {
 
     private String orderId;
@@ -43,9 +46,11 @@ public class OrderDTO {
     private Integer payState;
 
     //创建时间
+    @JsonSerialize(using = Date2LongSerializer.class)
     private Date createTime;
 
     //更新时间
+    @JsonSerialize(using = Date2LongSerializer.class)
     private Date updateTime;
 
 //    //一个OrderMaster的order_id可以获取到OrderDetail中的一个或者多个详情订单.
